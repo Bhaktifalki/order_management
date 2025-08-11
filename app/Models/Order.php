@@ -20,4 +20,10 @@ class Order extends Model
     {
         return $this->hasMany(OrderProduct::class);
     }
+    public function prunable()
+    {
+        // $this->user()->delete();
+        return $this->where('created_at', null);
+        // // return $this->where('created_at', '<', now()->subDays(30));
+    }
 }

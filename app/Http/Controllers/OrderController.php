@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\PodcastProcessed;
 use App\Http\Requests\OrderRequest;
 use App\Models\Order;
 use App\Models\OrderProduct;
@@ -12,14 +13,25 @@ use DataTables;
 
 class OrderController extends Controller
 {
-    public function index() {
+    public function index()
+    {
         $orders = Order::with('user')->paginate(10);
-       // dd($orders);
+        // dd($orders);
+
+        $collection = collect()->range(3, 6);
+        $collection->all();
+        // output : [3, 4, 5, 6]
+        $containsOneItem = collect([1, 2, 3])->containsOneItem(fn(int $item) => $item === 2);
+        // Output : true dd($containsOneItem);
+
+
+
         return view('orders.index', compact('orders'));
     }
 
-    public function create() {
-        $users = User::where('is_admin', 0)->get();
+    public function create()
+    {
+        $users = User::all();
         return view('orders.create', compact('users'));
     }
 
@@ -39,13 +51,14 @@ class OrderController extends Controller
             $product = new OrderProduct();
             $product->order_id = $order->id;
             $product->name = $productData['name'];
-
             $product->qty = $productData['qty'];
             $product->amount = $productData['amount'];
             $product->total = $productData['qty'] * $productData['amount'];
-        // dd($product);
             $product->save();
-            
+            $order->total = $grandTotal;
+
+            event(new PodcastProcessed($order));
+
             $grandTotal += $product->total;
         }
 
@@ -62,7 +75,4 @@ class OrderController extends Controller
         $order = Order::findOrFail($id);
         return view('orders.show', compact('order'));
     }
-
-
 }
-
